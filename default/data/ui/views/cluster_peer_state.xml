@@ -1,0 +1,54 @@
+<dashboard>
+  <label>cluster_peer_state</label>
+  <row>
+    <panel>
+      <table>
+        <title>Full Status</title>
+        <search id="cluster_master_peers">
+          <query>| rest /services/cluster/master/peers splunk_server=local</query>
+          <earliest></earliest>
+          <latest></latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Indexer Configuration</title>
+        <search base="cluster_master_peers">
+          <query>table label, host_port_pair, replication_use_ssl, replication_port, last_heartbeat, is_searchable, active_bundle_id, bucket_count, primary_count, primary_count_remote</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="wrap">undefined</option>
+        <option name="rowNumbers">undefined</option>
+        <option name="drilldown">row</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Bucket Count (Total)</title>
+        <search base="cluster_master_peers">
+          <query>table label, bucket_count</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Bucket Count (Primary)</title>
+        <search base="cluster_master_peers">
+          <query>table label, primary_count</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+  </row>
+</dashboard>

@@ -1,0 +1,130 @@
+<dashboard>
+  <label>Peer Migration Status</label>
+  <row>
+    <panel>
+      <table>
+        <title>Full Table</title>
+        <search id="peers_lookup_migration">
+          <query>| rest /services/cluster/master/peers splunk_server=local | lookup migratory_indexers.csv guid AS title</query>
+          <earliest></earliest>
+          <latest></latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Hosts by Status</title>
+        <search base="peers_lookup_migration">
+          <query>table splunk_server, title, host_fqdn, status, migration_status, migration_role</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="wrap">undefined</option>
+        <option name="rowNumbers">undefined</option>
+        <option name="drilldown">row</option>
+        <drilldown>
+          <set token="splunk_server">$row.splunk_server$</set>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row depends="$splunk_server$">
+    <panel>
+      <table>
+        <title>Detailed Host Information</title>
+        <search base="peers_lookup_migration">
+          <query>search splunk_server="$splunk_server$"</query>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row depends="$splunk_server$">
+    <panel>
+      <single>
+        <title>Migration State</title>
+        <search base="peers_lookup_migration">
+          <query>search splunk_server="$splunk_server$"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">migration_status</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Migration Role</title>
+        <search base="peers_lookup_migration">
+          <query>search splunk_server="$splunk_server$"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">migration_role</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Status</title>
+        <search base="peers_lookup_migration">
+          <query>search splunk_server="$splunk_server$"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">status</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Total (Clustered) Buckets</title>
+        <search base="peers_lookup_migration">
+          <query>search splunk_server="$splunk_server$"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">bucket_count</option>
+      </single>
+    </panel>
+  </row>
+  <row depends="$splunk_server$">
+    <panel>
+      <table>
+        <title>Replicated Buckets by Index</title>
+        <search base="peers_lookup_migration">
+          <query>search splunk_server="$splunk_server$" | fields splunk_server, bucket_count_by_index.*| untable splunk_server, index, buckets | rex mode=sed field=index "s/bucket_count_by_index\.//"</query>
+        </search>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>All Buckets by Index</title>
+        <search>
+          <query>| rest /services/data/indexes-extended splunk_server="$splunk_server$"
+| rename comment AS "Grumblefucky, an empty string is not NULL dammit"
+| eval bucket_dirs.thawed=if('bucket_dirs.thawed'=="", null(), 'bucket_dirs.thawed')
+| fillnull value=0 bucket_dirs.home.hot_bucket_count bucket_dirs.home.warm_bucket_count bucket_dirs.cold.bucket_count bucket_dirs.thawed
+| eval buckets='bucket_dirs.home.hot_bucket_count' + 'bucket_dirs.home.warm_bucket_count' + 'bucket_dirs.cold.bucket_count' + 'bucket_dirs.thawed'
+| eval replicated=if(repFactor="auto", "YES", "NO")
+|fields splunk_server, title buckets, replicated
+| rename title AS index</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="drilldown">cell</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+</dashboard>

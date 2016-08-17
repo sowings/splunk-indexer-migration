@@ -1,0 +1,137 @@
+<dashboard>
+  <label>Cluster Configuration Summary</label>
+  <search id="cluster_config">
+    <query>| rest /services/cluster/config/config</query>
+    <earliest></earliest>
+    <latest></latest>
+  </search>
+  <row>
+    <panel>
+      <single>
+        <title>Single-site Replication Factor</title>
+        <search base="cluster_config">
+          <query>search mode="master"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">replication_factor</option>
+      </single>
+      <single>
+        <title>Single-site Search Factor</title>
+        <search base="cluster_config">
+          <query>search mode="master"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">search_factor</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <title>Multisite?</title>
+        <search base="cluster_config">
+          <query>search mode="master"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">multisite</option>
+      </single>
+      <single>
+        <title>Multisite Replication Factor</title>
+        <search base="cluster_config">
+          <query>search mode="master"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">site_replication_factor</option>
+      </single>
+      <single>
+        <title>Multisite Search Factor</title>
+        <search base="cluster_config">
+          <query>search mode="master"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">site_search_factor</option>
+      </single>
+      <single>
+        <title>Master's Site</title>
+        <search base="cluster_config">
+          <query>search mode="master"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">site</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Cluster Peers</title>
+        <search base="cluster_config">
+          <query>search mode="slave"
+| fields splunk_server, replication_port, replication_use_ssl, register_*,  forwarderdata_rcv_port, max_peer*load</query>
+        </search>
+        <option name="wrap">undefined</option>
+        <option name="rowNumbers">undefined</option>
+        <option name="drilldown">row</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Clustered Indexes</title>
+        <search id="cluster_master_indexes">
+          <query>| rest /services/cluster/master/indexes splunk_server=local</query>
+          <earliest></earliest>
+          <latest></latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Site-Awareness of Indexes by Bucket Count</title>
+        <search base="cluster_master_indexes">
+          <query>| eval aware=num_buckets - non_site_aware_buckets_in_site_aware_cluster | rename non_site_aware_buckets_in_site_aware_cluster AS unaware | table title, aware unaware</query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">all</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+</dashboard>
