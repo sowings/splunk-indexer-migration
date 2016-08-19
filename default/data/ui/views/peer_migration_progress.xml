@@ -4,36 +4,23 @@
     <input type="dropdown" token="splunk_server" searchWhenChanged="true">
       <label>Indexer</label>
       <search>
-        <query>| inputlookup migratory_indexers.csv</query>
+        <query>| inputlookup migratory_indexers.csv | sort splunk_server</query>
       </search>
       <fieldForLabel>splunk_server</fieldForLabel>
       <fieldForValue>guid</fieldForValue>
     </input>
   </fieldset>
-  <row>
-    <panel>
-      <table>
-        <title>Full Table</title>
-        <search id="selected_master_buckets">
-          <query>| rest /services/cluster/master/buckets splunk_server=local
-| search title="*$splunk_server$"</query>
-          <earliest>0</earliest>
-          <latest></latest>
-        </search>
-        <option name="wrap">true</option>
-        <option name="rowNumbers">false</option>
-        <option name="dataOverlayMode">none</option>
-        <option name="drilldown">cell</option>
-        <option name="count">10</option>
-      </table>
-    </panel>
-  </row>
+  <search id="selected_master_buckets">
+    <query>| rest /services/cluster/master/buckets splunk_server=local</query>
+    <earliest>0</earliest>
+    <latest></latest>
+  </search>
   <row>
     <panel>
       <single>
         <title>Total Buckets Originating at Indexer</title>
         <search base="selected_master_buckets">
-          <query>stats count</query>
+          <query>search title="*$splunk_server$" | stats count</query>
           <earliest>0</earliest>
           <latest></latest>
         </search>
@@ -44,7 +31,7 @@
       <single>
         <title>Standalone Bucket Count</title>
         <search base="selected_master_buckets">
-          <query>search standalone=1 | stats count | rangemap field=count low=0-0 default=severe</query>
+          <query>search title="*$splunk_server$" standalone=1 | stats count | rangemap field=count low=0-0 default=severe</query>
           <earliest>0</earliest>
           <latest></latest>
         </search>
@@ -65,12 +52,145 @@
       <single>
         <title>Frozen Buckets</title>
         <search base="selected_master_buckets">
-          <query>search frozen=1 | stats count | rangemap field=count low=0-0 default=severe</query>
+          <query>search title="*$splunk_server$" frozen=1 | stats count | rangemap field=count low=0-0 default=severe</query>
           <earliest>0</earliest>
           <latest></latest>
         </search>
         <option name="drilldown">none</option>
       </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Single-Site Buckets</title>
+        <search base="selected_master_buckets">
+          <query>search title="*$splunk_server$" constrain_to_origin_site=1 | stats count</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <done>
+          <condition match="$result.count$ == 0">
+            <unset token="single_site_count"></unset>
+          </condition>
+          <condition>
+            <set token="single_site_count">yessir</set>
+          </condition>
+        </done>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Multi-Site Buckets</title>
+        <search base="selected_master_buckets">
+          <query>search title="*$splunk_server$" constrain_to_origin_site=0 | stats count</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <done>
+          <condition match="$result.count$ &gt; 0">
+            <set token="multi_site_count">yessir</set>
+          </condition>
+          <condition>
+            <unset token="multi_site_count"></unset>
+          </condition>
+        </done>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <title>Total Buckets Present</title>
+        <search base="selected_master_buckets">
+          <query>| fields title, peers.$splunk_server$.* | where isnotnull('peers.$splunk_server$.server_name') | stats count</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Standalone Buckets Present</title>
+        <search base="selected_master_buckets">
+          <query>where isnotnull('peers.$splunk_server$.server_name') AND standalone=1 | stats count | rangemap field=count low=0-0 default=severe</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+        <option name="linkView">search</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Frozen Buckets Present</title>
+        <search base="selected_master_buckets">
+          <query>where isnotnull('peers.$splunk_server$.server_name') AND  frozen=1 | stats count | rangemap field=count low=0-0 default=severe</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Total Single-Site Buckets</title>
+        <search base="selected_master_buckets">
+          <query>| fields title, peers.$splunk_server$.* constrain_to_origin_site | where isnotnull('peers.$splunk_server$.server_name') AND constrain_to_origin_site=1| stats count</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Total Multi-Site Buckets</title>
+        <search base="selected_master_buckets">
+          <query>| fields title, peers.$splunk_server$.* constrain_to_origin_site | where isnotnull('peers.$splunk_server$.server_name') AND constrain_to_origin_site=0| stats count</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Single-Site Bucket Status</title>
+        <search base="selected_master_buckets">
+          <query>search title="*$splunk_server$" constrain_to_origin_site=1 | table title peers.*.status | untable title GUID status</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="wrap">undefined</option>
+        <option name="rowNumbers">undefined</option>
+        <option name="drilldown">row</option>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Multi-Site Bucket Status</title>
+        <search base="selected_master_buckets">
+          <query>search title="*$splunk_server$" constrain_to_origin_site=0 | table title peers.*.status | untable title GUID status</query>
+          <earliest>0</earliest>
+          <latest></latest>
+        </search>
+        <option name="wrap">undefined</option>
+        <option name="rowNumbers">undefined</option>
+        <option name="drilldown">row</option>
+      </table>
     </panel>
   </row>
 </form>
