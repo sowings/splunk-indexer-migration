@@ -132,7 +132,7 @@
       <chart>
         <title>Fixup Activity Pending</title>
         <search base="cluster_metrics_log">
-          <query>search group=subtask_counts | timechart avg(to_fix_gen) avg(to_fix_total) avg(to_fix_rep_factor) avg(to_fix_search_factor) span=30s</query>
+          <query>search group=subtask_counts | timechart avg(to_fix_gen) AS Generation avg(to_fix_total) AS Total avg(to_fix_rep_factor) AS RF avg(to_fix_search_factor) AS SF span=30s</query>
         </search>
         <option name="charting.chart">column</option>
       </chart>
@@ -141,7 +141,7 @@
       <chart>
         <title>Master Job Activity</title>
         <search base="cluster_metrics_log">
-          <query>search group=jobs name=cmmaster | bucket _time span=30s | table _time CM*</query>
+          <query>search group=jobs name=cmmaster | bucket _time span=30s | table _time CM* | rename CMRepJob AS "Replicate Bucket" CMChangeBucketJob_build AS "Make Searchable", CMChangeMasksJob AS "Change Bucket Flags" CMBucketFrozenJob AS "Freeze Bucket"</query>
         </search>
         <option name="charting.chart">line</option>
       </chart>
