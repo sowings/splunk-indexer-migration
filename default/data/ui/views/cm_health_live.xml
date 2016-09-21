@@ -1,0 +1,88 @@
+<dashboard>
+  <label>Live CM Health</label>
+  <search id="cluster_metrics_log" ref="Cluster Master Metrics"></search>
+  <row>
+    <panel>
+      <single>
+        <title>Maintenance Mode</title>
+        <search>
+          <query>| rest /services/cluster/master/info | eval mm=if(maintenance_mode=1, "yes", "no") | rangemap field=maintenance_mode low=1-1 elevated=0-0</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">mm</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <title>Time Spent in Service</title>
+        <search base="cluster_metrics_log">
+          <query>| search group=subtask_seconds name=cmmaster_service | table _time service | rangemap low=0-1 elevated=1-2 extreme=2-1000 field=service | head 2</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="field">service</option>
+        <option name="colorMode">none</option>
+        <option name="numberPrecision">0.000</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+        <option name="linkView">search</option>
+        <option name="rangeColors">["0x65a637","0x6db7c6","0xf7bc38","0xf58f39","0xd93f3c"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="trendInterval">auto</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <search base="cluster_metrics_log">
+          <query>search group=subtask_counts |  stats latest(to_fix_gen) AS tofix</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">tofix</option>
+        <option name="underLabel">Generation</option>
+      </single>
+      <single>
+        <search base="cluster_metrics_log">
+          <query>search group=subtask_counts |  stats latest(to_fix_rep_factor) AS tofix</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">tofix</option>
+        <option name="underLabel">Rep Factor</option>
+      </single>
+      <single>
+        <search base="cluster_metrics_log">
+          <query>search group=subtask_counts |  stats latest(to_fix_search_factor) AS tofix</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">tofix</option>
+        <option name="underLabel">Search Factor</option>
+      </single>
+      <single>
+        <search base="cluster_metrics_log">
+          <query>search group=subtask_counts |  stats latest(to_fix_total) AS tofix</query>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="field">tofix</option>
+        <option name="underLabel">Total</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Fixup Activity Pending</title>
+        <search base="cluster_metrics_log">
+          <query>search group=subtask_counts | timechart avg(to_fix_gen) avg(to_fix_total) avg(to_fix_rep_factor) avg(to_fix_search_factor) span=30s</query>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+  </row>
+</dashboard>
