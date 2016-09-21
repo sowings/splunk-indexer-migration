@@ -6,7 +6,7 @@
       <single>
         <title>Maintenance Mode</title>
         <search>
-          <query>| rest /services/cluster/master/info splunk_server=local | eval mm=if(maintenance_mode=1, "yes", "no") | rangemap field=maintenance_mode low=1-1 elevated=0-0</query>
+          <query>| rest /services/cluster/master/info splunk_server=local | eval mm=if(maintenance_mode=1, "yes", "no") | rangemap field=maintenance_mode low=0-0 elevated=1-1</query>
         </search>
         <option name="drilldown">none</option>
         <option name="field">mm</option>
