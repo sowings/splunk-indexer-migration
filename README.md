@@ -4,7 +4,7 @@ This project attempts to monitor the process of migrating indexers. This migrati
 
 The package aims to provide visibility into:
 
-  * The workload on the Cluster Master.
+  * ~~The workload on the Cluster Master.~~
   * The progress of migrating a single host.
   * An indication when a host is "done" migrating.
   
